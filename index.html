@@ -584,6 +584,28 @@ header {
   background: var(--surface);
 }
 
+/* Filter Bar */
+.filter-bar {
+  max-width: 720px;
+  margin: 0 auto 16px;
+  display: flex;
+  gap: 12px;
+}
+.filter-bar input, .filter-bar select {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-family: 'Geist', sans-serif;
+  font-size: 0.8rem;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.filter-bar input { flex: 1; min-width: 0; }
+.filter-bar select { min-width: 140px; }
+.filter-bar input:focus, .filter-bar select:focus { border-color: var(--text); }
+
 
 /* Responsive */
 @media (max-width: 600px) {
@@ -639,6 +661,14 @@ header {
     </div>
   </div>
   <button class="add-btn full" onclick="addItem()">+ Add Course</button>
+</div>
+
+<!-- FILTER BAR -->
+<div class="filter-bar" id="filter-bar">
+  <input type="text" id="search-inp" placeholder="Search courses or universities..." oninput="handleFilter()" autocomplete="off">
+  <select id="filter-uni" onchange="handleFilter()">
+    <option value="">All Universities</option>
+  </select>
 </div>
 
 <!-- META BAR -->
@@ -717,6 +747,8 @@ let addConf = 'high';
 let editConf = 'high';
 let editingId = null;
 let currentView = 'list';
+let searchQuery = '';
+let filterUni = '';
 
 // ── STORAGE ──
 function load() {
@@ -768,6 +800,22 @@ function importJson(e) {
   };
   reader.readAsText(file);
   e.target.value = '';
+}
+
+// ── FILTER ──
+function handleFilter() {
+  searchQuery = document.getElementById('search-inp').value.toLowerCase();
+  filterUni = document.getElementById('filter-uni').value;
+  render();
+  if (currentView === 'full') renderFullView();
+}
+
+function getFilteredItems() {
+  return items.filter(item => {
+    const matchQ = item.course.toLowerCase().includes(searchQuery) || item.uni.toLowerCase().includes(searchQuery);
+    const matchU = filterUni === '' || item.uni === filterUni;
+    return matchQ && matchU;
+  });
 }
 
 // ── HELPERS ──
@@ -879,13 +927,17 @@ function setView(v) {
 
 function renderFullView() {
   const tbody = document.getElementById('fv-body');
-  if (!items.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:30px;font-family:Geist Mono,monospace;font-size:0.8rem;">No courses yet.</td></tr>'; return; }
-  tbody.innerHTML = items.map((item, idx) => `
-    <tr class="${item.locked ? 'locked' : item.level}" draggable="${!item.locked}" data-id="${item.id}">
+  const filtered = getFilteredItems();
+  const isFiltered = searchQuery !== '' || filterUni !== '';
+
+  if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:30px;font-family:Geist Mono,monospace;font-size:0.8rem;">No courses found.</td></tr>'; return; }
+  
+  tbody.innerHTML = filtered.map((item) => `
+    <tr class="${item.locked ? 'locked' : item.level}" draggable="${!item.locked && !isFiltered}" data-id="${item.id}">
       <td class="rank-col">
         <div style="display:flex;align-items:center;gap:6px">
-          <span class="drag-handle" style="font-size:0.75rem;padding:0">⠿</span>
-          ${idx + 1}
+          <span class="drag-handle" style="font-size:0.75rem;padding:0;opacity:${isFiltered ? '0.2' : '1'};cursor:${isFiltered ? 'not-allowed' : 'grab'}">⠿</span>
+          ${items.findIndex(i => i.id === item.id) + 1}
         </div>
       </td>
       <td><strong>${esc(item.course)}</strong></td>
@@ -917,31 +969,54 @@ function renderFullView() {
 function updateDataLists() {
   document.getElementById('dl-courses').innerHTML = meta.courses.map(c => `<option value="${esc(c)}">`).join('');
   document.getElementById('dl-unis').innerHTML    = meta.unis.map(u => `<option value="${esc(u)}">`).join('');
+  
+  const filterUniEl = document.getElementById('filter-uni');
+  if (filterUniEl) {
+    const curVal = filterUniEl.value;
+    filterUniEl.innerHTML = '<option value="">All Universities</option>' + meta.unis.map(u => `<option value="${esc(u)}">${esc(u)}</option>`).join('');
+    filterUniEl.value = curVal;
+  }
 }
 
 // ── RENDER ──
 function render() {
   const list = document.getElementById('list');
+  const filtered = getFilteredItems();
+  const isFiltered = searchQuery !== '' || filterUni !== '';
 
   if (!items.length) {
     list.innerHTML = '<div class="empty">No courses yet — add one above.</div>';
     document.getElementById('meta-bar').innerHTML = '';
+    document.getElementById('filter-bar').style.display = 'none';
     return;
   }
+  
+  document.getElementById('filter-bar').style.display = 'flex';
 
   const counts = { high: 0, med: 0, low: 0 };
   items.forEach(i => { if (!i.locked) counts[i.level]++; });
-  document.getElementById('meta-bar').innerHTML =
-    `<span><span class="meta-dot" style="background:var(--high-dot)"></span>${counts.high} high</span>
+  
+  let statsHtml = `<span><span class="meta-dot" style="background:var(--high-dot)"></span>${counts.high} high</span>
      <span><span class="meta-dot" style="background:var(--med-dot)"></span>${counts.med} medium</span>
      <span><span class="meta-dot" style="background:var(--low-dot)"></span>${counts.low} low</span>
-     <span style="color:var(--border2)">·</span>
-     <span>${items.length} total</span>`;
+     <span style="color:var(--border2)">·</span>`;
+     
+  if (isFiltered) {
+    statsHtml += `<span>Showing ${filtered.length} of ${items.length}</span>`;
+  } else {
+    statsHtml += `<span>${items.length} total</span>`;
+  }
+  document.getElementById('meta-bar').innerHTML = statsHtml;
 
-  list.innerHTML = items.map((item, idx) => `
-    <div class="item ${item.locked ? 'locked' : item.level}" draggable="${!item.locked}" data-id="${item.id}">
-      <div class="item-rank">${idx + 1}</div>
-      <div class="drag-handle">⠿</div>
+  if (!filtered.length) {
+    list.innerHTML = '<div class="empty" style="padding: 30px">No courses found matching filter.</div>';
+  } else {
+    list.innerHTML = filtered.map((item) => {
+      const rank = items.findIndex(i => i.id === item.id) + 1;
+      return `
+    <div class="item ${item.locked ? 'locked' : item.level}" draggable="${!item.locked && !isFiltered}" data-id="${item.id}">
+      <div class="item-rank">${rank}</div>
+      <div class="drag-handle" style="opacity:${isFiltered ? '0.2' : '1'};cursor:${isFiltered ? 'not-allowed' : 'grab'}">⠿</div>
       <div class="item-body">
         <div class="item-top">
           <span class="item-course">${esc(item.course)}</span>
@@ -956,7 +1031,9 @@ function render() {
         </button>
       </div>
     </div>
-  `).join('');
+      `;
+    }).join('');
+  }
 
   attachDrag();
 }
