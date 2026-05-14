@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Course Tracker</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@300;400;500;600&family=Geist:wght@300;400;500;600&display=swap');
+
+:root {
+  --bg: #f5f4f0;
+  --surface: #ffffff;
+  --border: #e2e0da;
+  --border2: #ccc9c0;
+  --text: #1a1916;
+  --muted: #9e9b93;
+  --faint: #f0ede6;
+
+  --high: #166534;
+  --high-bg: #dcfce7;
+  --high-border: #bbf7d0;
+  --high-dot: #22c55e;
+
+  --med: #92400e;
+  --med-bg: #fef3c7;
+  --med-border: #fde68a;
+  --med-dot: #f59e0b;
+
+  --low: #991b1b;
+  --low-bg: #fee2e2;
+  --low-border: #fecaca;
+  --low-dot: #ef4444;
+
+  --lock: #374151;
+  --lock-bg: #f3f4f6;
+  --lock-border: #d1d5db;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Geist', sans-serif;
+  min-height: 100vh;
+  padding: 48px 20px 80px;
+}
+
+/* ── HEADER ── */
+header {
+  max-width: 720px;
+  margin: 0 auto 36px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.header-left h1 {
+  font-family: 'Geist Mono', monospace;
+  font-size: 1.05rem;
+  font-weight: 500;
+  letter-spacing: -0.3px;
+  color: var(--text);
+}
+
+.header-left p {
+  margin-top: 3px;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.view-toggle {
+  display: flex;
+  gap: 4px;
+}
+
+.view-btn {
+  background: none;
+  border: 1px solid var(--border2);
+  border-radius: 5px;
+  padding: 5px 12px;
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.view-btn.active {
+  background: var(--text);
+  border-color: var(--text);
+  color: #fff;
+}
+
+/* ── ADD FORM ── */
+.add-form {
+  max-width: 720px;
+  margin: 0 auto 28px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field.full { grid-column: 1 / -1; }
+
+.field label {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.68rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.field input {
+  background: var(--faint);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-family: 'Geist', sans-serif;
+  font-size: 0.875rem;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.field input:focus { border-color: var(--text); background: #fff; }
+
+/* confidence picker */
+.conf-picker {
+  display: flex;
+  gap: 6px;
+}
+
+.conf-opt {
+  flex: 1;
+  padding: 7px 6px;
+  border-radius: 6px;
+  border: 1.5px solid var(--border);
+  background: var(--faint);
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.14s;
+  color: var(--muted);
+  user-select: none;
+}
+
+.conf-opt:hover { border-color: var(--border2); color: var(--text); }
+
+.conf-opt.sel-high {
+  background: var(--high-bg);
+  border-color: var(--high-dot);
+  color: var(--high);
+}
+
+.conf-opt.sel-med {
+  background: var(--med-bg);
+  border-color: var(--med-dot);
+  color: var(--med);
+}
+
+.conf-opt.sel-low {
+  background: var(--low-bg);
+  border-color: var(--low-dot);
+  color: var(--low);
+}
+
+.add-btn {
+  grid-column: 1 / -1;
+  background: var(--text);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 10px;
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  letter-spacing: 0.3px;
+}
+
+.add-btn:hover { opacity: 0.8; }
+
+/* ── STATS ── */
+.meta-bar {
+  max-width: 720px;
+  margin: 0 auto 14px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.meta-dot {
+  display: inline-block;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  margin-right: 4px;
+}
+
+/* ── LIST VIEW ── */
+#list-wrap { max-width: 720px; margin: 0 auto; }
+
+#list { display: flex; flex-direction: column; gap: 6px; }
+
+.item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: grid;
+  grid-template-columns: 18px 8px 1fr auto;
+  align-items: center;
+  gap: 0 12px;
+  padding: 0 14px 0 10px;
+  min-height: 56px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  position: relative;
+}
+
+.item:hover { border-color: var(--border2); }
+
+.item.dragging { opacity: 0.35; }
+.item.drag-over { border-color: var(--text); box-shadow: 0 0 0 2px rgba(26,25,22,0.08); }
+
+/* left accent bar */
+.item::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 8px; bottom: 8px;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+}
+
+.item.high::before { background: var(--high-dot); }
+.item.med::before  { background: var(--med-dot); }
+.item.low::before  { background: var(--low-dot); }
+.item.locked::before { background: var(--muted); }
+
+.item-rank {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--muted);
+  text-align: right;
+}
+
+.drag-handle {
+  color: var(--border2);
+  font-size: 0.85rem;
+  cursor: grab;
+  line-height: 1;
+  padding: 0 2px;
+}
+
+.item.locked .drag-handle { cursor: not-allowed; opacity: 0.4; }
+
+.item-body { padding: 12px 0; min-width: 0; }
+
+.item-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.item-course {
+  font-weight: 500;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.item-uni {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.level-pill {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.62rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 99px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  flex-shrink: 0;
+}
+
+.level-pill.high { background: var(--high-bg); color: var(--high); }
+.level-pill.med  { background: var(--med-bg);  color: var(--med); }
+.level-pill.low  { background: var(--low-bg);  color: var(--low); }
+.level-pill.locked { background: var(--lock-bg); color: var(--lock); }
+
+.item-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.item:hover .item-actions { opacity: 1; }
+
+.z-chip {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--muted);
+  padding: 2px 6px;
+  background: var(--faint);
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.icon-btn {
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.13s;
+  color: var(--muted);
+}
+
+.icon-btn:hover { border-color: var(--border2); color: var(--text); background: var(--faint); }
+.icon-btn.lock-active { color: var(--lock); }
+.icon-btn.del:hover { color: var(--low); border-color: var(--low-border); background: var(--low-bg); }
+
+.item.locked {
+  background: #fafaf8;
+}
+
+.item.locked .item-course { color: var(--muted); }
+.item.locked .item-uni { color: #bbb; }
+
+/* ── FULL VIEW (modal) ── */
+.fullview-overlay {
+  position: fixed; inset: 0;
+  background: rgba(245,244,240,0.92);
+  backdrop-filter: blur(6px);
+  z-index: 100;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 48px 20px;
+  overflow-y: auto;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.fullview-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.fullview {
+  width: 100%;
+  max-width: 720px;
+}
+
+.fullview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.fullview-header h2 {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.close-btn {
+  background: var(--text);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.close-btn:hover { opacity: 0.7; }
+
+.fv-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.fv-table th {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--muted);
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  background: var(--faint);
+}
+
+.fv-table td {
+  padding: 12px 14px;
+  font-size: 0.875rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.fv-table tr:last-child td { border-bottom: none; }
+
+.fv-table tr.high td:first-child { border-left: 3px solid var(--high-dot); }
+.fv-table tr.med  td:first-child { border-left: 3px solid var(--med-dot); }
+.fv-table tr.low  td:first-child { border-left: 3px solid var(--low-dot); }
+.fv-table tr.locked td:first-child { border-left: 3px solid var(--muted); }
+
+.fv-table tr.high { background: #fafffe; }
+.fv-table tr.med  { background: #fffef8; }
+.fv-table tr.low  { background: #fffafa; }
+
+.fv-table tr { transition: opacity 0.15s; }
+.fv-table tr[draggable="true"] { cursor: grab; }
+.fv-table tr[draggable="true"]:active { cursor: grabbing; }
+.fv-table tr.dragging { opacity: 0.35; }
+.fv-table tr.drag-over { outline: 2px solid var(--text); outline-offset: -2px; z-index: 1; position: relative; }
+.fv-table tr.locked .drag-handle { opacity: 0.4; cursor: not-allowed; }
+
+.fv-table td.rank-col {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--muted);
+  width: 60px;
+}
+
+/* ── EDIT MODAL ── */
+.edit-overlay {
+  position: fixed; inset: 0;
+  background: rgba(26,25,22,0.45);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s;
+}
+
+.edit-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.edit-modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  width: 100%;
+  max-width: 440px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  transform: translateY(8px);
+  transition: transform 0.18s;
+}
+
+.edit-overlay.open .edit-modal { transform: translateY(0); }
+
+.edit-modal h3 {
+  grid-column: 1 / -1;
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.edit-modal .full { grid-column: 1 / -1; }
+
+.edit-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.btn-cancel {
+  background: none;
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.78rem;
+  cursor: pointer;
+  color: var(--muted);
+  transition: all 0.13s;
+}
+
+.btn-cancel:hover { color: var(--text); border-color: var(--text); }
+
+.btn-save {
+  background: var(--text);
+  border: none;
+  border-radius: 6px;
+  padding: 8px 20px;
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #fff;
+  cursor: pointer;
+  transition: opacity 0.13s;
+}
+
+.btn-save:hover { opacity: 0.8; }
+
+/* empty */
+.empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--muted);
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.8rem;
+  border: 1px dashed var(--border2);
+  border-radius: 10px;
+  background: var(--surface);
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Course Tracker</h1>
+    <p>Drag to rank · data saved locally</p>
+  </div>
+  <div class="view-toggle">
+    <button class="view-btn active" onclick="setView('list')" id="btn-list">List</button>
+    <button class="view-btn" onclick="setView('full')" id="btn-full">Full View</button>
+  </div>
+</header>
+
+<!-- ADD FORM -->
+<div class="add-form" id="add-form">
+  <div class="field">
+    <label>Course</label>
+    <input id="inp-course" type="text" list="dl-courses" placeholder="e.g. Computer Science" autocomplete="off">
+    <datalist id="dl-courses"></datalist>
+  </div>
+  <div class="field">
+    <label>University</label>
+    <input id="inp-uni" type="text" list="dl-unis" placeholder="e.g. University of Colombo" autocomplete="off">
+    <datalist id="dl-unis"></datalist>
+  </div>
+  <div class="field">
+    <label>Z-Score Cutoff</label>
+    <input id="inp-zscore" type="number" step="0.0001" placeholder="e.g. 2.1234">
+  </div>
+  <div class="field">
+    <label>Confidence Level</label>
+    <div class="conf-picker">
+      <div class="conf-opt" data-val="high" onclick="selectConf('high')">High</div>
+      <div class="conf-opt" data-val="med"  onclick="selectConf('med')">Medium</div>
+      <div class="conf-opt" data-val="low"  onclick="selectConf('low')">Low</div>
+    </div>
+  </div>
+  <button class="add-btn full" onclick="addItem()">+ Add Course</button>
+</div>
+
+<!-- META BAR -->
+<div class="meta-bar" id="meta-bar"></div>
+
+<!-- LIST -->
+<div id="list-wrap">
+  <div id="list"></div>
+</div>
+
+<!-- FULL VIEW OVERLAY -->
+<div class="fullview-overlay" id="fv-overlay">
+  <div class="fullview">
+    <div class="fullview-header">
+      <h2>All Courses — Ranked</h2>
+      <button class="close-btn" onclick="setView('list')">Close ×</button>
+    </div>
+    <table class="fv-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Course</th>
+          <th>University</th>
+          <th>Z-Score</th>
+          <th>Confidence</th>
+        </tr>
+      </thead>
+      <tbody id="fv-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="edit-overlay" id="edit-overlay">
+  <div class="edit-modal">
+    <h3>Edit Course</h3>
+    <div class="field">
+      <label>Course</label>
+      <input id="edit-course" type="text" list="dl-courses" autocomplete="off">
+    </div>
+    <div class="field">
+      <label>University</label>
+      <input id="edit-uni" type="text" list="dl-unis" autocomplete="off">
+    </div>
+    <div class="field">
+      <label>Z-Score Cutoff</label>
+      <input id="edit-zscore" type="number" step="0.0001">
+    </div>
+    <div class="field full">
+      <label>Confidence Level</label>
+      <div class="conf-picker">
+        <div class="conf-opt" data-val="high" onclick="selectEditConf('high')">High</div>
+        <div class="conf-opt" data-val="med"  onclick="selectEditConf('med')">Medium</div>
+        <div class="conf-opt" data-val="low"  onclick="selectEditConf('low')">Low</div>
+      </div>
+    </div>
+    <div class="edit-actions full">
+      <button class="btn-cancel" onclick="closeEdit()">Cancel</button>
+      <button class="btn-save" onclick="saveEdit()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SKEY = 'uctracker_v2';
+const MKEY = 'uctracker_meta_v2';
+
+let items = [];
+let meta = { courses: [], unis: [] };
+let addConf = 'high';
+let editConf = 'high';
+let editingId = null;
+let currentView = 'list';
+
+// ── STORAGE ──
+function load() {
+  try { items = JSON.parse(localStorage.getItem(SKEY)) || []; } catch { items = []; }
+  try { meta  = JSON.parse(localStorage.getItem(MKEY)) || { courses: [], unis: [] }; } catch { meta = { courses: [], unis: [] }; }
+}
+
+function save() { localStorage.setItem(SKEY, JSON.stringify(items)); localStorage.setItem(MKEY, JSON.stringify(meta)); }
+
+function saveMeta(c, u) {
+  if (c && !meta.courses.includes(c)) meta.courses.push(c);
+  if (u && !meta.unis.includes(u)) meta.unis.push(u);
+  save();
+}
+
+// ── HELPERS ──
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function labelConf(l) { return l === 'high' ? 'High' : l === 'med' ? 'Medium' : 'Low'; }
+
+function selectConf(val) {
+  addConf = val;
+  document.querySelectorAll('#add-form .conf-opt').forEach(el => {
+    el.className = 'conf-opt' + (el.dataset.val === val ? ' sel-' + val : '');
+  });
+}
+
+function selectEditConf(val) {
+  editConf = val;
+  document.querySelectorAll('#edit-overlay .conf-opt').forEach(el => {
+    el.className = 'conf-opt' + (el.dataset.val === val ? ' sel-' + val : '');
+  });
+}
+
+// ── ADD ──
+function addItem() {
+  const course = document.getElementById('inp-course').value.trim();
+  const uni    = document.getElementById('inp-uni').value.trim();
+  const zscore = document.getElementById('inp-zscore').value.trim();
+  if (!course || !uni) { alert('Course and university are required.'); return; }
+  items.push({ id: Date.now(), course, uni, zscore: zscore || '—', level: addConf, locked: false });
+  saveMeta(course, uni);
+  updateDataLists();
+  render();
+  document.getElementById('inp-course').value = '';
+  document.getElementById('inp-uni').value = '';
+  document.getElementById('inp-zscore').value = '';
+  selectConf('high');
+}
+
+// ── DELETE ──
+function deleteItem(id) {
+  if (!confirm('Remove this course?')) return;
+  items = items.filter(i => i.id !== id);
+  save(); render();
+}
+
+// ── LOCK ──
+function toggleLock(id) {
+  const item = items.find(i => i.id === id);
+  if (item) { item.locked = !item.locked; save(); render(); }
+}
+
+// ── EDIT ──
+function openEdit(id) {
+  const item = items.find(i => i.id === id);
+  if (!item || item.locked) return;
+  editingId = id;
+  document.getElementById('edit-course').value = item.course;
+  document.getElementById('edit-uni').value    = item.uni;
+  document.getElementById('edit-zscore').value = item.zscore === '—' ? '' : item.zscore;
+  selectEditConf(item.level);
+  document.getElementById('edit-overlay').classList.add('open');
+}
+
+function closeEdit() {
+  editingId = null;
+  document.getElementById('edit-overlay').classList.remove('open');
+}
+
+function saveEdit() {
+  const item = items.find(i => i.id === editingId);
+  if (!item) return;
+  const course = document.getElementById('edit-course').value.trim();
+  const uni    = document.getElementById('edit-uni').value.trim();
+  const zscore = document.getElementById('edit-zscore').value.trim();
+  if (!course || !uni) { alert('Course and university are required.'); return; }
+  item.course = course;
+  item.uni    = uni;
+  item.zscore = zscore || '—';
+  item.level  = editConf;
+  saveMeta(course, uni);
+  updateDataLists();
+  closeEdit();
+  render();
+}
+
+// ── VIEW ──
+function setView(v) {
+  currentView = v;
+  document.getElementById('fv-overlay').classList.toggle('open', v === 'full');
+  document.getElementById('btn-list').classList.toggle('active', v === 'list');
+  document.getElementById('btn-full').classList.toggle('active', v === 'full');
+  if (v === 'full') renderFullView();
+}
+
+function renderFullView() {
+  const tbody = document.getElementById('fv-body');
+  if (!items.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:30px;font-family:Geist Mono,monospace;font-size:0.8rem;">No courses yet.</td></tr>'; return; }
+  tbody.innerHTML = items.map((item, idx) => `
+    <tr class="${item.locked ? 'locked' : item.level}" draggable="${!item.locked}" data-id="${item.id}">
+      <td class="rank-col">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="drag-handle" style="font-size:0.75rem;padding:0">⠿</span>
+          ${idx + 1}
+        </div>
+      </td>
+      <td><strong>${esc(item.course)}</strong></td>
+      <td style="color:var(--muted)">${esc(item.uni)}</td>
+      <td><span style="font-family:'Geist Mono',monospace;font-size:0.8rem">${esc(item.zscore)}</span></td>
+      <td><span class="level-pill ${item.locked ? 'locked' : item.level}">${item.locked ? '🔒 Locked' : labelConf(item.level)}</span></td>
+    </tr>
+  `).join('');
+  attachDragEvents('#fv-body tr[draggable="true"]', '#fv-body tr');
+}
+
+// ── DATALISTS ──
+function updateDataLists() {
+  document.getElementById('dl-courses').innerHTML = meta.courses.map(c => `<option value="${esc(c)}">`).join('');
+  document.getElementById('dl-unis').innerHTML    = meta.unis.map(u => `<option value="${esc(u)}">`).join('');
+}
+
+// ── RENDER ──
+function render() {
+  const list = document.getElementById('list');
+
+  if (!items.length) {
+    list.innerHTML = '<div class="empty">No courses yet — add one above.</div>';
+    document.getElementById('meta-bar').innerHTML = '';
+    return;
+  }
+
+  const counts = { high: 0, med: 0, low: 0 };
+  items.forEach(i => { if (!i.locked) counts[i.level]++; });
+  document.getElementById('meta-bar').innerHTML =
+    `<span><span class="meta-dot" style="background:var(--high-dot)"></span>${counts.high} high</span>
+     <span><span class="meta-dot" style="background:var(--med-dot)"></span>${counts.med} medium</span>
+     <span><span class="meta-dot" style="background:var(--low-dot)"></span>${counts.low} low</span>
+     <span style="color:var(--border2)">·</span>
+     <span>${items.length} total</span>`;
+
+  list.innerHTML = items.map((item, idx) => `
+    <div class="item ${item.locked ? 'locked' : item.level}" draggable="${!item.locked}" data-id="${item.id}">
+      <div class="item-rank">${idx + 1}</div>
+      <div class="drag-handle">⠿</div>
+      <div class="item-body">
+        <div class="item-top">
+          <span class="item-course">${esc(item.course)}</span>
+          <span class="level-pill ${item.locked ? 'locked' : item.level}">${item.locked ? '🔒' : labelConf(item.level)}</span>
+        </div>
+        <div class="item-uni">${esc(item.uni)} ${item.zscore !== '—' ? `<span style="font-family:'Geist Mono',monospace;font-size:0.7rem;margin-left:6px;color:var(--muted)">z ${esc(item.zscore)}</span>` : ''}</div>
+      </div>
+      <div class="item-actions">
+        ${!item.locked ? `<button class="icon-btn" onclick="openEdit(${item.id})" title="Edit">✎</button>` : ''}
+        <button class="icon-btn ${item.locked ? 'lock-active' : ''}" onclick="toggleLock(${item.id})" title="${item.locked ? 'Unlock' : 'Lock'}">
+          ${item.locked ? '🔒' : '🔓'}
+        </button>
+        ${!item.locked ? `<button class="icon-btn del" onclick="deleteItem(${item.id})" title="Delete">×</button>` : ''}
+      </div>
+    </div>
+  `).join('');
+
+  attachDrag();
+}
+
+// ── DRAG & DROP ──
+let dragId = null;
+
+function attachDragEvents(selector, dropSelector) {
+  document.querySelectorAll(selector).forEach(el => {
+    el.addEventListener('dragstart', e => {
+      dragId = parseInt(el.dataset.id);
+      setTimeout(() => el.classList.add('dragging'), 0);
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    el.addEventListener('dragend', () => {
+      el.classList.remove('dragging');
+      document.querySelectorAll(dropSelector).forEach(i => i.classList.remove('drag-over'));
+      dragId = null;
+    });
+    el.addEventListener('dragover', e => {
+      e.preventDefault();
+      document.querySelectorAll(dropSelector).forEach(i => i.classList.remove('drag-over'));
+      el.classList.add('drag-over');
+    });
+    el.addEventListener('drop', e => {
+      e.preventDefault();
+      const targetId = parseInt(el.dataset.id);
+      if (dragId == null || dragId === targetId) return;
+      const fromIdx = items.findIndex(i => i.id === dragId);
+      const toIdx   = items.findIndex(i => i.id === targetId);
+      const [moved] = items.splice(fromIdx, 1);
+      items.splice(toIdx, 0, moved);
+      save(); 
+      render();
+      if (currentView === 'full') renderFullView();
+    });
+  });
+}
+
+function attachDrag() {
+  attachDragEvents('.item[draggable="true"]', '.item');
+}
+
+// close edit on overlay click
+document.getElementById('edit-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('edit-overlay')) closeEdit();
+});
+
+// enter to add
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.activeElement.closest('#add-form')) addItem();
+  if (e.key === 'Escape') closeEdit();
+});
+
+// ── INIT ──
+load();
+updateDataLists();
+selectConf('high');
+render();
+</script>
+</body>
+</html>
