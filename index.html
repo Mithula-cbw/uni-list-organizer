@@ -307,6 +307,33 @@ header {
 .level-pill.low  { background: var(--low-bg);  color: var(--low); }
 .level-pill.locked { background: var(--lock-bg); color: var(--lock); }
 
+/* inline select for full view */
+.inline-conf {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 3px 18px 3px 8px;
+  border-radius: 99px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  border: 1px solid transparent;
+  outline: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  background-size: 10px;
+  transition: all 0.15s;
+}
+.inline-conf:hover:not(:disabled) { border-color: rgba(0,0,0,0.1); }
+.inline-conf:disabled { cursor: not-allowed; background-image: none; padding-right: 8px; }
+.inline-conf.high { background-color: var(--high-bg); color: var(--high); }
+.inline-conf.med  { background-color: var(--med-bg);  color: var(--med); }
+.inline-conf.low  { background-color: var(--low-bg);  color: var(--low); }
+.inline-conf.locked { background-color: var(--lock-bg); color: var(--lock); }
+
 .item-actions {
   display: flex;
   gap: 4px;
@@ -732,6 +759,16 @@ function toggleLock(id) {
   }
 }
 
+function changeConfidence(id, val) {
+  const item = items.find(i => i.id === id);
+  if (item && !item.locked) {
+    item.level = val;
+    save();
+    render();
+    if (currentView === 'full') renderFullView();
+  }
+}
+
 // ── EDIT ──
 function openEdit(id) {
   const item = items.find(i => i.id === id);
@@ -790,10 +827,18 @@ function renderFullView() {
       <td><strong>${esc(item.course)}</strong></td>
       <td style="color:var(--muted)">${esc(item.uni)}</td>
       <td><span style="font-family:'Geist Mono',monospace;font-size:0.8rem">${esc(item.zscore)}</span></td>
-      <td><span class="level-pill ${item.locked ? 'locked' : item.level}">${item.locked ? '🔒 Locked' : labelConf(item.level)}</span></td>
+      <td>
+        ${item.locked ? 
+          `<span class="level-pill locked">🔒 Locked</span>` : 
+          `<select class="inline-conf ${item.level}" onchange="changeConfidence(${item.id}, this.value)">
+            <option value="high" ${item.level === 'high' ? 'selected' : ''}>High</option>
+            <option value="med" ${item.level === 'med' ? 'selected' : ''}>Medium</option>
+            <option value="low" ${item.level === 'low' ? 'selected' : ''}>Low</option>
+          </select>`
+        }
+      </td>
       <td>
         <div style="display:flex; gap:4px">
-          ${!item.locked ? `<button class="icon-btn" onclick="openEdit(${item.id})" title="Edit">✎</button>` : ''}
           <button class="icon-btn ${item.locked ? 'lock-active' : ''}" onclick="toggleLock(${item.id})" title="${item.locked ? 'Unlock' : 'Lock'}">
             ${item.locked ? '🔒' : '🔓'}
           </button>
