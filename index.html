@@ -584,16 +584,6 @@ header {
   background: var(--surface);
 }
 
-/* Print / PDF */
-@media print {
-  body { padding: 0; background: #fff; color: #000; }
-  .add-form, .view-toggle, .item-actions, .drag-handle, .close-btn, #edit-overlay { display: none !important; }
-  .item { break-inside: avoid; border-color: #ddd; box-shadow: none !important; }
-  header { margin-bottom: 20px; }
-  .fv-table th { background: #eee; color: #000; border-bottom: 1px solid #ccc; }
-  .fv-table td { border-bottom: 1px solid #eee; }
-  .inline-conf { border: none !important; appearance: none; -webkit-appearance: none; background-image: none !important; padding-right: 8px !important; }
-}
 
 /* Responsive */
 @media (max-width: 600px) {
@@ -615,7 +605,6 @@ header {
     <div style="margin-top: 10px; display: flex; gap: 6px;">
       <button class="view-btn" onclick="document.getElementById('import-file').click()" style="padding: 3px 8px; font-size: 0.65rem;">Import</button>
       <button class="view-btn" onclick="exportJson()" style="padding: 3px 8px; font-size: 0.65rem;">Export</button>
-      <button class="view-btn" onclick="window.print()" style="padding: 3px 8px; font-size: 0.65rem;">Print PDF</button>
       <input type="file" id="import-file" accept=".json" style="display:none" onchange="importJson(event)">
     </div>
   </div>
