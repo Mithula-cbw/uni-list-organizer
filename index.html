@@ -105,7 +105,7 @@ header {
   gap: 14px;
 }
 
-.field { display: flex; flex-direction: column; gap: 5px; }
+.field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 .field.full { grid-column: 1 / -1; }
 
 .field label {
@@ -117,6 +117,8 @@ header {
 }
 
 .field input {
+  width: 100%;
+  min-width: 0;
   background: var(--faint);
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -300,7 +302,11 @@ header {
   text-transform: uppercase;
   letter-spacing: 0.4px;
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
+.level-pill svg { width: 1.1em; height: 1.1em; }
 
 .level-pill.high { background: var(--high-bg); color: var(--high); }
 .level-pill.med  { background: var(--med-bg);  color: var(--med); }
@@ -685,6 +691,10 @@ header {
 const SKEY = 'uctracker_v2';
 const MKEY = 'uctracker_meta_v2';
 
+const iconLock = `<svg width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>`;
+const iconUnlock = `<svg width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>`;
+const iconEdit = `<svg width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
+
 let items = [];
 let meta = { courses: [], unis: [] };
 let addConf = 'high';
@@ -829,7 +839,7 @@ function renderFullView() {
       <td><span style="font-family:'Geist Mono',monospace;font-size:0.8rem">${esc(item.zscore)}</span></td>
       <td>
         ${item.locked ? 
-          `<span class="level-pill locked">🔒 Locked</span>` : 
+          `<span class="level-pill locked">${iconLock} Locked</span>` : 
           `<select class="inline-conf ${item.level}" onchange="changeConfidence(${item.id}, this.value)">
             <option value="high" ${item.level === 'high' ? 'selected' : ''}>High</option>
             <option value="med" ${item.level === 'med' ? 'selected' : ''}>Medium</option>
@@ -840,7 +850,7 @@ function renderFullView() {
       <td>
         <div style="display:flex; gap:4px">
           <button class="icon-btn ${item.locked ? 'lock-active' : ''}" onclick="toggleLock(${item.id})" title="${item.locked ? 'Unlock' : 'Lock'}">
-            ${item.locked ? '🔒' : '🔓'}
+            ${item.locked ? iconLock : iconUnlock}
           </button>
         </div>
       </td>
@@ -881,14 +891,14 @@ function render() {
       <div class="item-body">
         <div class="item-top">
           <span class="item-course">${esc(item.course)}</span>
-          <span class="level-pill ${item.locked ? 'locked' : item.level}">${item.locked ? '🔒' : labelConf(item.level)}</span>
+          <span class="level-pill ${item.locked ? 'locked' : item.level}">${item.locked ? iconLock : labelConf(item.level)}</span>
         </div>
         <div class="item-uni">${esc(item.uni)} ${item.zscore !== '—' ? `<span style="font-family:'Geist Mono',monospace;font-size:0.7rem;margin-left:6px;color:var(--muted)">z ${esc(item.zscore)}</span>` : ''}</div>
       </div>
       <div class="item-actions">
-        ${!item.locked ? `<button class="icon-btn" onclick="openEdit(${item.id})" title="Edit">✎</button>` : ''}
+        ${!item.locked ? `<button class="icon-btn" onclick="openEdit(${item.id})" title="Edit">${iconEdit}</button>` : ''}
         <button class="icon-btn ${item.locked ? 'lock-active' : ''}" onclick="toggleLock(${item.id})" title="${item.locked ? 'Unlock' : 'Lock'}">
-          ${item.locked ? '🔒' : '🔓'}
+          ${item.locked ? iconLock : iconUnlock}
         </button>
       </div>
     </div>
